@@ -1,7 +1,8 @@
 import axios from "axios";
 import { hasOwnPropertyOfType } from "typechecking-toolkit";
+import { logger } from "./logger";
 import { bunnyAPIHeaders } from "./operator";
-import { Regions } from "./types";
+import { Regions, StorageZoneSpec } from "./types";
 
 interface ApiStorageZone {
   Id: number;
@@ -48,8 +49,7 @@ export const getOrCreateStorageZone = async (
   const zones = await getStorageZones();
   const existingZone = zones.find(zone => zone.Name == name);
   if (existingZone) {
-    console.debug(`Storage zone ${name} already exists (${existingZone.Id}), skipping...`);
-    // #TODO handle update
+    logger.debug(`Storage zone ${name} already exists (${existingZone.Id}), skipping...`);
     return { ready: true, message: "", id: existingZone.Id };
   } else {
     try {
@@ -75,6 +75,16 @@ export const getOrCreateStorageZone = async (
       return { ready: false, message: e instanceof Error ? e.message : "Unknown" };
     }
   }
+};
+
+export const handleStorageZoneModification = async (
+  name: string,
+  { region, replicationRegions }: StorageZoneSpec
+): Promise<IStorageZoneCreationStatus> => {
+  const zone = await getOrCreateStorageZone(name, region, replicationRegions);
+  // #TODO handle update
+
+  return zone;
 };
 
 export const deleteStorageZone = async (id: number): Promise<void> => {

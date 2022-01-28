@@ -1,6 +1,6 @@
 import Operator, { ResourceEvent, ResourceEventType } from "@dot-i/k8s-operator";
-import { deleteStorageZone, getOrCreateStorageZone } from "./manageStorageZone";
-import { BUNNY_CDN_STORAGE_ZONE, StorageZone } from "./PullZone";
+import { deleteStorageZone, handleStorageZoneModification } from "./manageStorageZone";
+import { BUNNY_CDN_STORAGE_ZONE, StorageZone } from "./types";
 import { logger } from "./logger";
 
 const BUNNY_CDN_API_KEY = process.env.BUNNY_CDN_API_KEY;
@@ -41,7 +41,7 @@ export class BunnyOperator extends Operator {
 
     if (!object.status || object.status.observedGeneration !== metadata.generation) {
       // handle resource modification here
-      const { ready, message, id } = await getOrCreateStorageZone(metadata.name, object.spec.region, object.spec.replicationRegions);
+      const { ready, message, id } = await handleStorageZoneModification(metadata.name, object.spec);
       await this.setResourceStatus(e.meta, { observedGeneration: metadata.generation, ready, message, id });
     }
   }
