@@ -1,8 +1,7 @@
 import Operator, { ResourceEvent, ResourceEventType } from "@dot-i/k8s-operator";
-// import { createUser, deleteUser } from "./manageUsers";
-import { logger } from "./logger";
+import { deleteStorageZone, getOrCreateStorageZone } from "./manageStorageZone";
 import { BUNNY_CDN_STORAGE_ZONE, StorageZone } from "./PullZone";
-// import { MongoDBUser, MONGO_DB_USER } from "./MongoDBUser";
+import { logger } from "./logger";
 
 const BUNNY_CDN_API_KEY = process.env.BUNNY_CDN_API_KEY;
 
@@ -14,6 +13,7 @@ export const bunnyAPIHeaders = { Accept: "application/json", AccessKey: BUNNY_CD
 
 export class BunnyOperator extends Operator {
   protected async init(): Promise<void> {
+    // storage zone
     await this.watchResource(
       BUNNY_CDN_STORAGE_ZONE.API_GROUP,
       BUNNY_CDN_STORAGE_ZONE.API_VERSION,
@@ -41,17 +41,24 @@ export class BunnyOperator extends Operator {
 
     if (!object.status || object.status.observedGeneration !== metadata.generation) {
       // handle resource modification here
-
-      // await createUser({ mongoClient: this.mongoClient, k8sClient: this.k8sApi, object });
-
-      await this.setResourceStatus(e.meta, { observedGeneration: metadata.generation });
+      const { ready, message, id } = await getOrCreateStorageZone(metadata.name, object.spec.region, object.spec.replicationRegions);
+      await this.setResourceStatus(e.meta, { observedGeneration: metadata.generation, ready, message, id });
     }
   }
 
   private async onStorageZoneDeleted(e: ResourceEvent): Promise<void> {
-    logger.debug("Storage zone deleted");
-    // const object = e.object as MongoDBUser;
+    const object = e.object as StorageZone;
 
-    // await deleteUser({ mongoClient: this.mongoClient, object });
+    if (object.status.ready) {
+      // do delete
+      if (!object.status.id) {
+        // this shouldn't happen
+        throw new Error("Failed to find storage zone ID from resource state");
+      }
+      await deleteStorageZone(object.status.id);
+    } else {
+      // ignore
+    }
+    logger.debug("Storage zone deleted");
   }
 }

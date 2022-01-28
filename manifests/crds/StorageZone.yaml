@@ -29,6 +29,10 @@ spec:
             status:
               type: object
               properties:
+                ready:
+                  type: boolean
+                message:
+                  type: string
                 observedGeneration:
                   type: integer
                   format: int64
@@ -37,6 +41,17 @@ spec:
       subresources:
         # status enables the status subresource.
         status: {}
+      additionalPrinterColumns:
+        - name: Ready
+          type: boolean
+          jsonPath: .status.ready          
+        - name: Message
+          type: string
+          jsonPath: .status.message
+        - name: StorageZoneID
+          type: number
+          jsonPath: .status.id
+
   # either Namespaced or Cluster
   scope: Namespaced
   names:

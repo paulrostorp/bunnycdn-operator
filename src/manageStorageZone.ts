@@ -1,18 +1,32 @@
 import axios from "axios";
+import { hasOwnPropertyOfType } from "typechecking-toolkit";
 import { bunnyAPIHeaders } from "./operator";
-import { Regions } from "./PullZone";
+import { Regions } from "./types";
 
 interface ApiStorageZone {
   Id: number;
   Name: string;
-  // Password: "2435eb42-c5ce-4524-92ab89d8c5de-b4c8-4a42";
-  // DateModified: "2022-01-20T14:29:18.0773833Z";
   Deleted: boolean;
   Region: Regions;
   ReplicationRegions: Regions[];
   PullZones: [] | null; // #TODO
   ReadOnlyPassword: string;
 }
+
+// util
+interface IBunnyAPIErrorPayload {
+  ErrorKey: string;
+  Field: string;
+  Message: string;
+}
+
+const isBunnyAPIErrorPayload = (err: unknown): err is IBunnyAPIErrorPayload => {
+  return (
+    hasOwnPropertyOfType(err, "ErrorKey", "string") &&
+    hasOwnPropertyOfType(err, "Field", "string") &&
+    hasOwnPropertyOfType(err, "Message", "string")
+  );
+};
 
 const getStorageZones = async (): Promise<Array<ApiStorageZone>> => {
   const res = await axios.get<{ Items: Array<ApiStorageZone> }>("https://api.bunny.net/storagezone?page=1&perPage=1000", {
@@ -24,24 +38,45 @@ const getStorageZones = async (): Promise<Array<ApiStorageZone>> => {
   return res.data.Items;
 };
 
-const getOrCreateStorageZone = async (name: string, originUrl: string): Promise<ApiStorageZone> => {
+type IStorageZoneCreationStatus = { ready: true; message: ""; id: number } | { ready: false; message: string; id?: never };
+
+export const getOrCreateStorageZone = async (
+  name: string,
+  region?: string,
+  replicationRegions?: string[]
+): Promise<IStorageZoneCreationStatus> => {
   const zones = await getStorageZones();
   const existingZone = zones.find(zone => zone.Name == name);
   if (existingZone) {
     console.debug(`Storage zone ${name} already exists (${existingZone.Id}), skipping...`);
     // #TODO handle update
-    return existingZone;
+    return { ready: true, message: "", id: existingZone.Id };
   } else {
-    const res = await axios.post<ApiStorageZone>(
-      "https://api.bunny.net/pullzone",
-      {
-        Name: name,
-        // OriginUrl: originUrl,
-        // Region:
-      },
-      { headers: bunnyAPIHeaders }
-    );
+    try {
+      const res = await axios.post<ApiStorageZone>(
+        "https://api.bunny.net/storagezone",
+        {
+          Name: name,
+          ...(region ? { Region: region } : {}),
+          ...(replicationRegions ? { ReplicationRegions: replicationRegions } : {}),
+        },
+        { headers: bunnyAPIHeaders }
+      );
 
-    return res.data;
+      return { ready: true, message: "", id: res.data.Id };
+    } catch (e) {
+      if (axios.isAxiosError(e)) {
+        const data = e.response?.data;
+        if (isBunnyAPIErrorPayload(data)) return { ready: false, message: data.Message };
+
+        return { ready: false, message: e.message };
+      }
+
+      return { ready: false, message: e instanceof Error ? e.message : "Unknown" };
+    }
   }
+};
+
+export const deleteStorageZone = async (id: number): Promise<void> => {
+  await axios.delete<ApiStorageZone>(`https://api.bunny.net/storagezone/${id}`, { headers: bunnyAPIHeaders });
 };

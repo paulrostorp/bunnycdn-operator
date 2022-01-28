@@ -21,6 +21,7 @@
     "@dot-i/k8s-operator": "^1.2.1",
     "@kubernetes/client-node": "^0.16.2",
     "axios": "^0.25.0",
+    "typechecking-toolkit": "^1.0.5",
     "typescript": "^4.1.2",
     "winston-logfmt": "^1.0.0"
   },
@@ -31,6 +32,7 @@
     "eslint": "^7.14.0",
     "eslint-config-prettier": "^6.15.0",
     "eslint-plugin-prettier": "^3.1.4",
+    "nodemon": "^2.0.15",
     "prettier": "^2.2.1",
     "ts-node": "^9.1.1"
   }
