@@ -39,18 +39,12 @@ const getStorageZones = async (): Promise<Array<ApiStorageZone>> => {
   return res.data.Items;
 };
 
-type IStorageZoneCreationStatus = { ready: true; message: ""; id: number } | { ready: false; message: string; id?: never };
-
-export const getOrCreateStorageZone = async (
-  name: string,
-  region?: string,
-  replicationRegions?: string[]
-): Promise<IStorageZoneCreationStatus> => {
+export const getOrCreateStorageZone = async (name: string, region?: string, replicationRegions?: string[]): Promise<number> => {
   const zones = await getStorageZones();
   const existingZone = zones.find(zone => zone.Name == name);
   if (existingZone) {
     logger.debug(`Storage zone ${name} already exists (${existingZone.Id}), skipping...`);
-    return { ready: true, message: "", id: existingZone.Id };
+    return existingZone.Id;
   } else {
     try {
       const res = await axios.post<ApiStorageZone>(
@@ -62,29 +56,30 @@ export const getOrCreateStorageZone = async (
         },
         { headers: bunnyAPIHeaders }
       );
-
-      return { ready: true, message: "", id: res.data.Id };
+      return res.data.Id;
     } catch (e) {
       if (axios.isAxiosError(e)) {
         const data = e.response?.data;
-        if (isBunnyAPIErrorPayload(data)) return { ready: false, message: data.Message };
-
-        return { ready: false, message: e.message };
+        if (isBunnyAPIErrorPayload(data)) throw new Error(data.Message);
       }
-
-      return { ready: false, message: e instanceof Error ? e.message : "Unknown" };
+      throw e;
     }
   }
 };
+
+type IStorageZoneCreationStatus = { ready: true; message: ""; id: number } | { ready: false; message: string; id?: never };
 
 export const handleStorageZoneModification = async (
   name: string,
   { region, replicationRegions }: StorageZoneSpec
 ): Promise<IStorageZoneCreationStatus> => {
-  const zone = await getOrCreateStorageZone(name, region, replicationRegions);
-  // #TODO handle update
-
-  return zone;
+  try {
+    const zoneId = await getOrCreateStorageZone(name, region, replicationRegions);
+    // #TODO handle update
+    return { ready: true, message: "", id: zoneId };
+  } catch (e) {
+    return { ready: false, message: e instanceof Error ? e.message : "Unknown" };
+  }
 };
 
 export const deleteStorageZone = async (id: number): Promise<void> => {
