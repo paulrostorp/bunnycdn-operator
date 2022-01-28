@@ -47,26 +47,19 @@ spec:
       restartPolicy: Always
 ```
 If your cluster has RBAC enabled, see the detailed example in the `/manifests` directory.
-### Create a mongoDB tenant / user
+### Creating a storage zone
 
-Apply `MongoDBUser` custom resource to your cluster:
+Apply `StorageZone` custom resource to your cluster:
 
 ```yaml
-apiVersion: mongotenantoperator.com/v1alpha1
-kind: MongoDBUser
+apiVersion: bunny-cdn-operator.com/v1alpha1
+kind: StorageZone
 metadata:
-  name: dev-team-1
+  name: operator-test-xyz-test-zone
   namespace: default
 spec:
-  dbName: my-awesome-db
-  roles:
-    - "dbAdmin"
+  region: DE
+  replicationRegions: ["NY", "LA"]
 ```
 
-This creates a mongodb user as specified and once successful, creates a secret in the same namespace, in the format of `<db name>.<user name>.credentials`.
-
-With the example above, the secret would be named `my-awesome-db.dev-team-1.credentials`.
-
-The secret will contain three keys: `MONGO_DATABASE`, `MONGO_USERNAME` and `MONGO_PASSWORD`.
-
-You can then mount this secret to your workload to connect to the mongo database.
+This creates a storage zone on your bunny CDN account. Keep in mind that `name` is globally unique and at this time you cannot edit a storage zone once created.
