@@ -149,3 +149,7 @@ export const handlePullZoneModification = async (
     return { ready: false, message: e instanceof Error ? e.message : "Unknown" };
   }
 };
+
+export const deletePullZone = async (id: number): Promise<void> => {
+  await axios.delete(`https://api.bunny.net/pullzone/${id}`, { headers: bunnyAPIHeaders });
+};

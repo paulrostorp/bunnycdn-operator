@@ -3,7 +3,7 @@ import { deleteStorageZone, handleStorageZoneModification } from "./manageStorag
 import { BUNNY_CDN_PULL_ZONE, BUNNY_CDN_STORAGE_ZONE, PullZone, StorageZone } from "./types";
 import { logger } from "./logger";
 import { CustomObjectsApi } from "@kubernetes/client-node";
-import { handlePullZoneModification } from "./managePullZone";
+import { deletePullZone, handlePullZoneModification } from "./managePullZone";
 
 const BUNNY_CDN_API_KEY = process.env.BUNNY_CDN_API_KEY;
 
@@ -105,7 +105,7 @@ export class BunnyOperator extends Operator {
         // this shouldn't happen
         throw new Error("Failed to find pull zone ID from resource state");
       }
-      // await deleteStorageZone(object.status.id);
+      await deletePullZone(object.status.id);
     } else {
       // ignore
     }
