@@ -69,7 +69,7 @@ const getOriginConfig = async (
 
     const id = await backOff(() => getStorageZoneCrStatusId(name, namespace, customObjectsAPIClient), {
       retry: (e, attempt) => {
-        if (e instanceof StorageZoneNotReadyError && attempt < 5) {
+        if (e instanceof StorageZoneNotReadyError) {
           logger.debug("Storage zone not ready, retrying...", { attempt });
           return true;
         } else {
@@ -77,6 +77,7 @@ const getOriginConfig = async (
           return false;
         }
       },
+      startingDelay: 500,
     });
 
     return { StorageZoneId: id };
@@ -88,6 +89,7 @@ const getOriginConfig = async (
     throw new Error(`Required property missing on ${name}: at least one of "originUrl", "storageZoneId" or "storageZoneRef" is required`);
   }
 };
+
 type IUpdatePullZoneProps = Partial<Omit<IPullZone, "Name" | "Id" | "ZoneSecurityKey" | "Hostnames">>;
 const updatePullZone = async (id: number, config: IUpdatePullZoneProps): Promise<IPullZone> => {
   const { data } = await axios.post<IUpdatePullZoneProps, AxiosResponse<IPullZone>>(`https://api.bunny.net/pullzone/${id}`, config, {
