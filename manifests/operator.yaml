@@ -1,23 +1,22 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: mongodb-tenant-operator
+  name: bunny-cdn-operator
   namespace: default
   labels:
-    app: mongodb-tenant-operator
+    app: bunny-cdn-operator
 spec:
   selector:
     matchLabels:
-      app: mongodb-tenant-operator
+      app: bunny-cdn-operator
   replicas: 1
   template:
     metadata:
       labels:
-        app: mongodb-tenant-operator
+        app: bunny-cdn-operator
     spec:
-      serviceAccountName: mongodb-tenant-operator-service-account
       containers:
-      - name:  mongodb-tenant-operator
+      - name:  bunny-cdn-operator
         image: ghcr.io/paulrostorp/bunnycdn-operator:latest
         resources:
           requests:
@@ -27,9 +26,9 @@ spec:
             cpu: 100m
             memory: 150Mi
         env:
-        - name: MONGO_CLUSTER_ADMIN_URI
+        - name: BUNNY_CDN_API_KEY
           valueFrom:
-            secretKeyRef:
-              name: mongodb-admin-credentials
-              key: MONGO_DB_HOST
+            secretKeyRef: ### -> Replace this with your own creds
+              name: bunny-cdn-credentials
+              key: API_KEY
       restartPolicy: Always
