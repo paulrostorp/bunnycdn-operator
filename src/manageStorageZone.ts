@@ -3,7 +3,7 @@ import axios from "axios";
 import { hasOwnPropertyOfType } from "typechecking-toolkit";
 import { logger } from "./logger";
 import { bunnyAPIHeaders } from "./operator";
-import { BUNNY_CDN_STORAGE_ZONE, Regions, StorageZone, StorageZoneSpec } from "./types";
+import { BUNNY_CDN_STORAGE_ZONE, Regions, StorageZone } from "./types";
 import { createK8Secret } from "./utils/k8Secret";
 import { isNestedHttpResponse, StorageZoneNotReadyError } from "./utils/misc";
 
