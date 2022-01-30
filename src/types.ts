@@ -14,7 +14,7 @@ export const BUNNY_CDN_STORAGE_ZONE = {
 export interface StorageZone extends KubernetesObject {
   metadata: StorageZoneMeta;
   spec: StorageZoneSpec;
-  status: StorageZoneStatus;
+  status?: StorageZoneStatus;
 }
 export interface StorageZoneMeta extends V1ObjectMeta {
   name: string;
@@ -44,7 +44,7 @@ export const BUNNY_CDN_PULL_ZONE = {
 export interface PullZone extends KubernetesObject {
   spec: PullZoneSpec;
   metadata: PullZoneMeta;
-  status: PullZoneStatus;
+  status?: PullZoneStatus;
 }
 
 export interface PullZoneMeta extends V1ObjectMeta {
@@ -54,7 +54,7 @@ export interface PullZoneMeta extends V1ObjectMeta {
 
 export interface PullZoneSpec {
   originUrl?: string;
-  storageZoneId?: string;
+  storageZoneId?: number;
   storageZoneRef?: {
     name: string;
     namespace: string;

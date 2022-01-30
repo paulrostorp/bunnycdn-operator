@@ -11,3 +11,5 @@ export const isNestedHttpResponse = (error: unknown): error is { response: http.
   }
   return false;
 };
+
+export class StorageZoneNotReadyError extends Error {}

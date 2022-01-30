@@ -1,8 +1,10 @@
+import { CustomObjectsApi } from "@kubernetes/client-node";
 import axios from "axios";
 import { hasOwnPropertyOfType } from "typechecking-toolkit";
 import { logger } from "./logger";
 import { bunnyAPIHeaders } from "./operator";
-import { Regions, StorageZoneSpec } from "./types";
+import { BUNNY_CDN_STORAGE_ZONE, Regions, StorageZone, StorageZoneSpec } from "./types";
+import { isNestedHttpResponse, StorageZoneNotReadyError } from "./utils/misc";
 
 interface ApiStorageZone {
   Id: number;
@@ -84,4 +86,33 @@ export const handleStorageZoneModification = async (
 
 export const deleteStorageZone = async (id: number): Promise<void> => {
   await axios.delete<ApiStorageZone>(`https://api.bunny.net/storagezone/${id}`, { headers: bunnyAPIHeaders });
+};
+
+export const getStorageZoneCrStatusId = async (
+  name: string,
+  namespace: string,
+  customObjectsAPIClient: CustomObjectsApi
+): Promise<number> => {
+  try {
+    const { body } = await customObjectsAPIClient.getNamespacedCustomObjectStatus(
+      BUNNY_CDN_STORAGE_ZONE.API_GROUP,
+      BUNNY_CDN_STORAGE_ZONE.API_VERSION,
+      namespace,
+      BUNNY_CDN_STORAGE_ZONE.PLURAL,
+      name
+    );
+
+    const { status } = body as StorageZone;
+
+    if (!status?.ready || !status?.id) throw new StorageZoneNotReadyError(`Storage zone ${name} in ${namespace} is not ready`);
+
+    return status.id;
+  } catch (e) {
+    if (isNestedHttpResponse(e)) {
+      if (e.response.statusCode == 404) {
+        throw `Storage Zone ${name} in ${namespace} not found.`;
+      }
+    }
+    throw e;
+  }
 };
