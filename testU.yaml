@@ -1,7 +1,0 @@
-apiVersion: mongotenantoperator.com/v1alpha1
-kind: StorageZone
-metadata:
-  name: test-zone
-  namespace: default
-spec:
-  region: DE

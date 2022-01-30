@@ -1,0 +1,20 @@
+apiVersion: bunny-cdn-operator.com/v1alpha1
+kind: StorageZone
+metadata:
+  name: testing-testing-zx
+  namespace: default
+spec:
+  region: DE
+  replicationRegions: ["NY"]
+---
+apiVersion: bunny-cdn-operator.com/v1alpha1
+kind: PullZone
+metadata:
+  name: testing-pz
+  namespace: default
+spec:
+  storageZoneRef:
+    name: testing-testing-zx
+    namespace: default
+  zoneType: volume
+  monthlyBandwidthLimit: 1000
