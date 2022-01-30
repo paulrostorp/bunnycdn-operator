@@ -65,7 +65,7 @@ export class BunnyOperator extends Operator {
 
     if (!object.status || object.status.observedGeneration !== metadata.generation) {
       // handle resource modification here
-      const { ready, message, id } = await handleStorageZoneModification(metadata.name, object.spec);
+      const { ready, message, id } = await handleStorageZoneModification(object, this.k8sApi);
       await this.setResourceStatus(e.meta, { observedGeneration: metadata.generation, ready, message, id });
     }
   }

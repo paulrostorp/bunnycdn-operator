@@ -1,9 +1,10 @@
-import { CustomObjectsApi } from "@kubernetes/client-node";
+import { CoreV1Api, CustomObjectsApi } from "@kubernetes/client-node";
 import axios from "axios";
 import { hasOwnPropertyOfType } from "typechecking-toolkit";
 import { logger } from "./logger";
 import { bunnyAPIHeaders } from "./operator";
 import { BUNNY_CDN_STORAGE_ZONE, Regions, StorageZone, StorageZoneSpec } from "./types";
+import { createK8Secret } from "./utils/k8Secret";
 import { isNestedHttpResponse, StorageZoneNotReadyError } from "./utils/misc";
 
 interface ApiStorageZone {
@@ -14,6 +15,7 @@ interface ApiStorageZone {
   ReplicationRegions: Regions[];
   PullZones: [] | null; // #TODO
   ReadOnlyPassword: string;
+  Password: string;
 }
 
 // util
@@ -41,12 +43,12 @@ const getStorageZones = async (): Promise<Array<ApiStorageZone>> => {
   return res.data.Items;
 };
 
-export const getOrCreateStorageZone = async (name: string, region?: string, replicationRegions?: string[]): Promise<number> => {
+export const getOrCreateStorageZone = async (name: string, region?: string, replicationRegions?: string[]): Promise<ApiStorageZone> => {
   const zones = await getStorageZones();
   const existingZone = zones.find(zone => zone.Name == name);
   if (existingZone) {
     logger.debug(`Storage zone ${name} already exists (${existingZone.Id}), skipping...`);
-    return existingZone.Id;
+    return existingZone;
   } else {
     try {
       const res = await axios.post<ApiStorageZone>(
@@ -58,7 +60,7 @@ export const getOrCreateStorageZone = async (name: string, region?: string, repl
         },
         { headers: bunnyAPIHeaders }
       );
-      return res.data.Id;
+      return res.data;
     } catch (e) {
       if (axios.isAxiosError(e)) {
         const data = e.response?.data;
@@ -71,14 +73,30 @@ export const getOrCreateStorageZone = async (name: string, region?: string, repl
 
 type IStorageZoneCreationStatus = { ready: true; message: ""; id: number } | { ready: false; message: string; id?: never };
 
-export const handleStorageZoneModification = async (
-  name: string,
-  { region, replicationRegions }: StorageZoneSpec
-): Promise<IStorageZoneCreationStatus> => {
+export const handleStorageZoneModification = async (object: StorageZone, k8sApiClient: CoreV1Api): Promise<IStorageZoneCreationStatus> => {
   try {
-    const zoneId = await getOrCreateStorageZone(name, region, replicationRegions);
+    const { metadata, spec } = object;
+    const { name } = metadata;
+    const { region, replicationRegions } = spec;
+
+    const { Id, Name, Password, ReadOnlyPassword } = await getOrCreateStorageZone(name, region, replicationRegions);
     // #TODO handle update
-    return { ready: true, message: "", id: zoneId };
+    await createK8Secret(
+      k8sApiClient,
+      `${name}.storagezone.credentials`,
+      {
+        BUNNY_CDN_STORAGE_ZONE_ID: Buffer.from(Id.toString()).toString("base64"),
+        BUNNY_CDN_STORAGE_ZONE_NAME: Buffer.from(Name).toString("base64"),
+        BUNNY_CDN_STORAGE_ZONE_PASSWORD: Buffer.from(Password).toString("base64"),
+        BUNNY_CDN_STORAGE_ZONE_RO_PASSWORD: Buffer.from(ReadOnlyPassword).toString("base64"),
+        BUNNY_CDN_STORAGE_ZONE_HOSTNAME: Buffer.from("storage.bunnycdn.com").toString("base64"),
+        BUNNY_CDN_STORAGE_ZONE_USERNAME: Buffer.from(Name).toString("base64"),
+        BUNNY_CDN_STORAGE_ZONE_PORT: Buffer.from("21").toString("base64"),
+      },
+      metadata.namespace,
+      object
+    );
+    return { ready: true, message: "", id: Id };
   } catch (e) {
     return { ready: false, message: e instanceof Error ? e.message : "Unknown" };
   }
@@ -88,6 +106,7 @@ export const deleteStorageZone = async (id: number): Promise<void> => {
   await axios.delete<ApiStorageZone>(`https://api.bunny.net/storagezone/${id}`, { headers: bunnyAPIHeaders });
 };
 
+// util
 export const getStorageZoneCrStatusId = async (
   name: string,
   namespace: string,
