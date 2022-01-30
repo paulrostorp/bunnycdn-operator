@@ -79,7 +79,7 @@ export class BunnyOperator extends Operator {
         // this shouldn't happen
         throw new Error("Failed to find storage zone ID from resource state");
       }
-      await deleteStorageZone(object.status.id);
+      if (object.spec.deletionPolicy === "delete") await deleteStorageZone(object.status.id);
     } else {
       // ignore
     }
@@ -105,7 +105,7 @@ export class BunnyOperator extends Operator {
         // this shouldn't happen
         throw new Error("Failed to find pull zone ID from resource state");
       }
-      await deletePullZone(object.status.id);
+      if (object.spec.deletionPolicy === "delete") await deletePullZone(object.status.id);
     } else {
       // ignore
     }

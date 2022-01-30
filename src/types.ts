@@ -24,6 +24,7 @@ export interface StorageZoneMeta extends V1ObjectMeta {
 export interface StorageZoneSpec {
   region?: Regions;
   replicationRegions?: Regions[];
+  deletionPolicy: "delete" | "retain";
 }
 
 export interface StorageZoneStatus {
@@ -64,6 +65,7 @@ export interface PullZoneSpec {
   errorPageWhiteLabel: boolean; // defaults to true
   enabledCacheSlice: boolean; // defaults to true
   monthlyBandwidthLimit: number; // defaults to 0 a.k.a unlimited
+  deletionPolicy: "delete" | "retain";
 }
 
 export interface PullZoneStatus {

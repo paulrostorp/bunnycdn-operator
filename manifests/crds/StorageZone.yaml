@@ -26,6 +26,10 @@ spec:
                   type: array
                   items:
                     type: string
+                deletionPolicy:
+                  type: string
+                  pattern: "^(delete|retain)"
+                  default: "retain"
             status:
               type: object
               properties:
