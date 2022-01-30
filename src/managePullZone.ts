@@ -77,6 +77,7 @@ const getOriginConfig = async (
           return false;
         }
       },
+      numOfAttempts: 5,
       startingDelay: 500,
     });
 
