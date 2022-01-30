@@ -15,6 +15,7 @@ spec:
       labels:
         app: bunny-cdn-operator
     spec:
+      serviceAccount: bunny-cdn-operator-service-account
       containers:
       - name:  bunny-cdn-operator
         image: ghcr.io/paulrostorp/bunnycdn-operator:latest

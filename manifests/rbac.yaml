@@ -1,14 +1,14 @@
 apiVersion: v1
 kind: ServiceAccount
 metadata:
-  name: mongodb-tenant-operator-service-account
-  namespace: default
+  name: bunny-cdn-operator-service-account
+  namespace: core
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
   # "namespace" omitted since ClusterRoles are not namespaced
-  name: mongodb-tenant-operator-cluster-role
+  name: bunny-cdn-operator-service-cluster-role
 rules:
   - apiGroups: [""] # "" indicates the core API group
     resources: ["namespaces"]
@@ -16,21 +16,21 @@ rules:
   - apiGroups: [""] # "" indicates the core API group
     resources: ["secrets"]
     verbs: ["get", "delete", "create"]
-  - apiGroups: ["bunny-cdn-operator.com"] # "" indicates the core API group
+  - apiGroups: ["bunny-cdn-operator.com"]
     resources:
-      ["storagezones", "storagezones/status", "storagezones/finalizers"]
+      ["pullzones", "pullzones/status", "pullzones/finalizers", "storagezones", "storagezones/status", "storagezones/finalizers"]
     verbs: ["get", "watch", "update", "patch", "delete", "create"]
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 # This cluster role binding allows anyone in the "manager" group to read secrets in any namespace.
 kind: ClusterRoleBinding
 metadata:
-  name: bunny-cdn-operator-cluster-role-binding
+  name: bunnycdn-operator-cluster-role-binding
 subjects:
   - kind: ServiceAccount
     name: bunny-cdn-operator-service-account
-    namespace: default
+    namespace: core
 roleRef:
   kind: ClusterRole
-  name: mongodb-tenant-operator-cluster-role
+  name: bunny-cdn-operator-service-cluster-role
   apiGroup: rbac.authorization.k8s.io
