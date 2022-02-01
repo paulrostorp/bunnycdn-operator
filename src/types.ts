@@ -58,7 +58,7 @@ export interface PullZoneSpec {
   storageZoneId?: number;
   storageZoneRef?: {
     name: string;
-    namespace: string;
+    namespace?: string;
   };
   zoneType: "premium" | "volume"; // defaults to volume
   zoneSecurityEnabled: boolean; // defaults to true

@@ -33,7 +33,6 @@ spec:
                       type: string
                   required:
                     - "name"
-                    - "namespace"
                 zoneType:
                   type: string
                   pattern: "^(premium|volume)"

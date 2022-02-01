@@ -3,7 +3,7 @@ import axios, { AxiosResponse } from "axios";
 import { logger } from "./logger";
 import { getStorageZoneCrStatusId } from "./manageStorageZone";
 import { bunnyAPIHeaders } from "./operator";
-import { PullZone, PullZoneSpec } from "./types";
+import { PullZone } from "./types";
 import { backOff } from "exponential-backoff";
 import { StorageZoneNotReadyError } from "./utils/misc";
 import { createK8Secret } from "./utils/k8Secret";
@@ -61,11 +61,12 @@ const getOrCreatePullZone = async (config: ICreatePullZoneProps): Promise<IPullZ
 };
 
 const getOriginConfig = async (
-  spec: PullZoneSpec,
+  object: PullZone,
   customObjectsAPIClient: CustomObjectsApi
 ): Promise<{ StorageZoneId: number } | { OriginUrl: string }> => {
+  const { spec, metadata } = object;
   if (spec.storageZoneRef) {
-    const { name, namespace } = spec.storageZoneRef;
+    const { name, namespace = metadata.namespace } = spec.storageZoneRef;
 
     const id = await backOff(() => getStorageZoneCrStatusId(name, namespace, customObjectsAPIClient), {
       retry: (e, attempt) => {
@@ -100,13 +101,13 @@ const updatePullZone = async (id: number, config: IUpdatePullZoneProps): Promise
 };
 
 const getOrCreatePullZoneConfig = async (
-  name: string,
-  spec: PullZoneSpec,
+  object: PullZone,
   customObjectsAPIClient: CustomObjectsApi
 ): Promise<{ createConfig: ICreatePullZoneProps; updateConfig: IUpdatePullZoneProps }> => {
-  const originConfig = await getOriginConfig(spec, customObjectsAPIClient);
+  const { spec, metadata } = object;
+  const originConfig = await getOriginConfig(object, customObjectsAPIClient);
   const createConfig: ICreatePullZoneProps = {
-    Name: name,
+    Name: metadata.name,
     Type: spec.zoneType.trim() == "premium" ? 0 : 1,
     ...originConfig,
   };
@@ -131,8 +132,8 @@ export const handlePullZoneModification = async (
   k8sApiClient: CoreV1Api
 ): Promise<IPullZoneCreationStatus> => {
   try {
-    const { metadata, spec } = object;
-    const { createConfig, updateConfig } = await getOrCreatePullZoneConfig(metadata.name, spec, customObjectsAPIClient);
+    const { metadata } = object;
+    const { createConfig, updateConfig } = await getOrCreatePullZoneConfig(object, customObjectsAPIClient);
     const { Id } = await getOrCreatePullZone(createConfig);
     const zone = await updatePullZone(Id, updateConfig);
     await createK8Secret(
