@@ -2,7 +2,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   # name must match the spec fields below, and be in the form: <plural>.<group>
-  name: pullzones.bunny-cdn-operator.com
+  name: edgerules.bunny-cdn-operator.com
 spec:
   # group name to use for REST API: /apis/<group>/<version>
   group: bunny-cdn-operator.com
@@ -19,48 +19,39 @@ spec:
           properties:
             spec:
               type: object
+              required: ["actionType", "triggers", "triggerMatchingType"]
               properties:
-                originUrl:
-                  type: string
-                storageZoneId:
+                actionType:
                   type: integer
-                edgeRules:
+                actionParameter1:
+                  type: string
+                actionParameter2:
+                  type: string
+                triggers:
                   type: array
                   items:
                     type: object
                     properties:
-                      name:
+                      type:
+                        type: integer
+                      patternMatches:
+                        type: array
+                        items:
+                          type: string
+                      patternMatchingType:
+                        type: integer
+                      parameter1:
                         type: string
-                      namespace:
-                        type: string
-                    required:
-                      - "name"
-                storageZoneRef:
-                  type: object
-                  properties:
-                    name:
-                      type: string
-                    namespace:
-                      type: string
-                  required:
-                    - "name"
-                zoneType:
-                  type: string
-                  pattern: "^(premium|volume)"
-                  default: "volume"
-                zoneSecurityEnabled:
-                  type: boolean
-                  default: true
-                errorPageWhiteLabel:
-                  type: boolean
-                  default: true
-                enabledCacheSlice:
-                  type: boolean
-                  default: true
-                monthlyBandwidthLimit:
+                    required: ["type", "patternMatchingType"]
+
+                triggerMatchingType:
                   type: integer
-                  minimum: 0
-                  default: 0
+                description:
+                  type: string
+                enabled:
+                  type: boolean
+                  default: true
+                
                 deletionPolicy:
                   type: string
                   pattern: "^(delete|retain)"
@@ -76,30 +67,30 @@ spec:
                   type: integer
                   format: int64
                 id:
-                  type: integer
+                  type: string
       subresources:
         # status enables the status subresource.
         status: {}
       additionalPrinterColumns:
         - name: Ready
           type: boolean
-          jsonPath: .status.ready          
+          jsonPath: .status.ready
         - name: Message
           type: string
           jsonPath: .status.message
-        - name: PullZoneID
-          type: number
+        - name: EdgeRuleID
+          type: string
           jsonPath: .status.id
 
   # either Namespaced or Cluster
   scope: Namespaced
   names:
     # plural name to be used in the URL: /apis/<group>/<version>/<plural>
-    plural: pullzones
+    plural: edgerules
     # singular name to be used as an alias on the CLI and for display
-    singular: pullzone
+    singular: edgerule
     # kind is normally the CamelCased singular type. Your resource manifests use this.
-    kind: PullZone
+    kind: EdgeRule
     # shortNames allow shorter string to match your resource on the CLI
     shortNames:
-    - "plz"
+      - "edr"

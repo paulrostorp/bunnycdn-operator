@@ -60,6 +60,10 @@ export interface PullZoneSpec {
     name: string;
     namespace?: string;
   };
+  edgeRules?: {
+    name: string;
+    namespace?: string;
+  }[];
   zoneType: "premium" | "volume"; // defaults to volume
   zoneSecurityEnabled: boolean; // defaults to true
   errorPageWhiteLabel: boolean; // defaults to true
@@ -69,6 +73,47 @@ export interface PullZoneSpec {
 }
 
 export interface PullZoneStatus {
+  id?: number;
+  ready: boolean;
+  message: string;
+  observedGeneration?: number;
+}
+
+// Edge rule
+export const BUNNY_CDN_EDGE_RULE = {
+  API_GROUP,
+  API_VERSION: "v1alpha1",
+  PLURAL: "edgerules",
+};
+
+export interface EdgeRule extends KubernetesObject {
+  metadata: EdgeRuleMeta;
+  spec: EdgeRuleSpec;
+  status?: EdgeRuleStatus;
+}
+export interface EdgeRuleMeta extends V1ObjectMeta {
+  name: string;
+  namespace: string;
+}
+
+interface Trigger {
+  type: number;
+  patternMatches?: string[];
+  patternMatchingType: number;
+  parameter1: string;
+}
+export interface EdgeRuleSpec {
+  actionType: number;
+  actionParameter1?: string;
+  actionParameter2?: string;
+  triggers: Trigger[];
+  triggerMatchingType: number;
+  description?: string;
+  enabled?: boolean;
+  deletionPolicy: "delete" | "retain";
+}
+
+export interface EdgeRuleStatus {
   id?: number;
   ready: boolean;
   message: string;
