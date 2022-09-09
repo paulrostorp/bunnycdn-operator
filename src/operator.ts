@@ -1,9 +1,10 @@
+import { BUNNY_CDN_EDGE_RULE, BUNNY_CDN_PULL_ZONE, BUNNY_CDN_STORAGE_ZONE, EdgeRule, PullZone, StorageZone } from "./types";
 import Operator, { OperatorLogger, ResourceEvent, ResourceEventType } from "@dot-i/k8s-operator";
 import { deleteStorageZone, handleStorageZoneModification } from "./manageStorageZone";
-import { BUNNY_CDN_PULL_ZONE, BUNNY_CDN_STORAGE_ZONE, PullZone, StorageZone } from "./types";
-import { logger } from "./logger";
-import { CustomObjectsApi } from "@kubernetes/client-node";
 import { deletePullZone, handlePullZoneModification } from "./managePullZone";
+import { deleteEdgeRule, handleEdgeRuleModification } from "./manageEdgeRule";
+import { CustomObjectsApi } from "@kubernetes/client-node";
+import { logger } from "./logger";
 
 const BUNNY_CDN_API_KEY = process.env.BUNNY_CDN_API_KEY;
 
@@ -21,6 +22,22 @@ export class BunnyOperator extends Operator {
   }
 
   protected async init(): Promise<void> {
+    // edge rule
+    await this.watchResource(BUNNY_CDN_EDGE_RULE.API_GROUP, BUNNY_CDN_EDGE_RULE.API_VERSION, BUNNY_CDN_EDGE_RULE.PLURAL, async e => {
+      const object = e.object as EdgeRule;
+      const metadata = object.metadata;
+      try {
+        if (e.type === ResourceEventType.Added || e.type === ResourceEventType.Modified) {
+          const isOpDelete = await this.handleResourceFinalizer(e, BUNNY_CDN_EDGE_RULE.API_GROUP, e => this.onEdgeRuleDeleted(e));
+          if (!isOpDelete) {
+            await this.onEdgeRuleModified(e);
+          }
+        }
+      } catch (err) {
+        logger.error(`Failed to process event for resource ${metadata?.name}: ` + (err instanceof Error ? err.message : "error unknown"));
+      }
+    });
+
     // storage zone
     await this.watchResource(
       BUNNY_CDN_STORAGE_ZONE.API_GROUP,
@@ -59,6 +76,37 @@ export class BunnyOperator extends Operator {
     });
   }
 
+  private async onEdgeRuleModified(e: ResourceEvent): Promise<void> {
+    const object = e.object as EdgeRule;
+    const metadata = object.metadata;
+
+    if (!object.status || object.status.observedGeneration !== metadata.generation) {
+      // handle resource modification here
+      const { ready, message, id, pullZoneId } = await handleEdgeRuleModification(object, this.customObjectsAPIClient);
+      await this.setResourceStatus(e.meta, { observedGeneration: metadata.generation, ready, message, id, pullZoneId });
+      logger.debug(`Edge rule ${object.metadata.name} created/updated`);
+    }
+  }
+
+  private async onEdgeRuleDeleted(e: ResourceEvent): Promise<void> {
+    const object = e.object as EdgeRule;
+
+    if (object?.status?.ready) {
+      // do delete
+      if (!object.status.id || !object.status.pullZoneId) {
+        // this shouldn't happen
+        throw new Error("Failed to find edge rule ID from resource state");
+      }
+      if (object.spec.deletionPolicy === "delete") {
+        await deleteEdgeRule(object.status.id, object.status.pullZoneId);
+      }
+    } else {
+      // ignore
+    }
+
+    logger.debug(`Edge rule ${object.metadata.name} deleted`);
+  }
+
   private async onStorageZoneModified(e: ResourceEvent): Promise<void> {
     const object = e.object as StorageZone;
     const metadata = object.metadata;
@@ -66,6 +114,7 @@ export class BunnyOperator extends Operator {
     if (!object.status || object.status.observedGeneration !== metadata.generation) {
       // handle resource modification here
       const { ready, message, id } = await handleStorageZoneModification(object, this.k8sApi);
+
       await this.setResourceStatus(e.meta, { observedGeneration: metadata.generation, ready, message, id });
     }
   }

@@ -1,0 +1,111 @@
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  # name must match the spec fields below, and be in the form: <plural>.<group>
+  name: edgerules.bunny-cdn-operator.com
+spec:
+  # group name to use for REST API: /apis/<group>/<version>
+  group: bunny-cdn-operator.com
+  # list of versions supported by this CustomResourceDefinition
+  versions:
+    - name: v1alpha1
+      # Each version can be enabled/disabled by Served flag.
+      served: true
+      # One and only one version must be marked as the storage version.
+      storage: true
+      schema:
+        openAPIV3Schema:
+          type: object
+          properties:
+            spec:
+              type: object
+              required:
+                ["pullZoneRef", "actionType", "triggers", "triggerMatchingType"]
+              properties:
+                pullZoneRef:
+                  type: object
+                  properties:
+                    name:
+                      type: string
+                    namespace:
+                      type: string
+                  required:
+                    - "name"
+                actionType:
+                  type: integer
+                actionParameter1:
+                  type: string
+                actionParameter2:
+                  type: string
+                triggers:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      type:
+                        type: integer
+                      patternMatches:
+                        type: array
+                        items:
+                          type: string
+                      patternMatchingType:
+                        type: integer
+                      parameter1:
+                        type: string
+                    required: ["type", "patternMatchingType"]
+
+                triggerMatchingType:
+                  type: integer
+                description:
+                  type: string
+                enabled:
+                  type: boolean
+                  default: true
+
+                deletionPolicy:
+                  type: string
+                  pattern: "^(delete|retain)"
+                  default: "retain"
+            status:
+              type: object
+              properties:
+                ready:
+                  type: boolean
+                message:
+                  type: string
+                observedGeneration:
+                  type: integer
+                  format: int64
+                id:
+                  type: string
+                pullZoneId:
+                  type: number
+      subresources:
+        # status enables the status subresource.
+        status: {}
+      additionalPrinterColumns:
+        - name: Ready
+          type: boolean
+          jsonPath: .status.ready
+        - name: Message
+          type: string
+          jsonPath: .status.message
+        - name: EdgeRuleID
+          type: string
+          jsonPath: .status.id
+        - name: PullZoneID
+          type: number
+          jsonPath: .status.pullZoneId
+
+  # either Namespaced or Cluster
+  scope: Namespaced
+  names:
+    # plural name to be used in the URL: /apis/<group>/<version>/<plural>
+    plural: edgerules
+    # singular name to be used as an alias on the CLI and for display
+    singular: edgerule
+    # kind is normally the CamelCased singular type. Your resource manifests use this.
+    kind: EdgeRule
+    # shortNames allow shorter string to match your resource on the CLI
+    shortNames:
+      - "edr"

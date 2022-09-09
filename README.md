@@ -1,6 +1,7 @@
 # bunnycdn-operator
 
-This operator helps you dynamically create pull zones and storage zones on BunnyCDN.
+This kubernetes operator helps you dynamically create pull zones and storage zones on [BunnyCDN](https://bunny.net/).
+
 ### Install Custom Resource Definitions
 ```sh
 kubectl apply -f ./manifests/crds/
@@ -84,3 +85,33 @@ spec:
 
 This creates a pull zone on your bunny CDN account. Keep in mind that `name` is globally unique and at this time you cannot edit a storage zone once created.
 It will also produce a k8s secret named `<name of pull zone>.pullzone.credentials` containing information and credentials about the pull zone.
+
+### Creating an edge rule
+
+Apply `EdgeRule` custom resource to your cluster:
+Configuration guidelines are documented here: https://docs.bunny.net/reference/pullzonepublic_addedgerule
+
+
+```yaml
+apiVersion: bunny-cdn-operator.com/v1alpha1
+kind: EdgeRule
+metadata:
+  name: operator-test-xyz-test-pull-zone
+  namespace: default
+spec:
+  pullZoneRef:
+    name: testing-pz
+    namespace: default
+  actionType: 1
+  actionParameter1: yahoo.fr
+  triggers:
+    - type: 0
+      patternMatches: ["*"]
+      patternMatchingType: 0
+  triggerMatchingType: 0
+  description: testing operator rule
+  enabled: true
+  deletionPolicy: delete
+  
+```
+

@@ -74,3 +74,50 @@ export interface PullZoneStatus {
   message: string;
   observedGeneration?: number;
 }
+
+// Edge rule
+export const BUNNY_CDN_EDGE_RULE = {
+  API_GROUP,
+  API_VERSION: "v1alpha1",
+  PLURAL: "edgerules",
+};
+
+export interface EdgeRule extends KubernetesObject {
+  metadata: EdgeRuleMeta;
+  spec: EdgeRuleSpec;
+  status?: EdgeRuleStatus;
+}
+export interface EdgeRuleMeta extends V1ObjectMeta {
+  name: string;
+  namespace: string;
+}
+
+interface Trigger {
+  type: number;
+  patternMatches?: string[];
+  patternMatchingType: number;
+  parameter1?: string;
+}
+
+export interface EdgeRuleSpec {
+  pullZoneRef: {
+    name: string;
+    namespace?: string;
+  };
+  actionType: number;
+  actionParameter1?: string;
+  actionParameter2?: string;
+  triggers: Trigger[];
+  triggerMatchingType: number;
+  description?: string;
+  enabled: boolean;
+  deletionPolicy: "delete" | "retain";
+}
+
+export interface EdgeRuleStatus {
+  id?: string;
+  pullZoneId?: number;
+  ready: boolean;
+  message: string;
+  observedGeneration?: number;
+}

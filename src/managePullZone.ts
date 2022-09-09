@@ -1,12 +1,12 @@
+import { isNestedHttpResponse, PullZoneNotReadyError, StorageZoneNotReadyError } from "./utils/misc";
 import { CoreV1Api, CustomObjectsApi } from "@kubernetes/client-node";
-import axios, { AxiosResponse } from "axios";
-import { logger } from "./logger";
 import { getStorageZoneCrStatusId } from "./manageStorageZone";
-import { bunnyAPIHeaders } from "./operator";
-import { PullZone } from "./types";
-import { backOff } from "exponential-backoff";
-import { StorageZoneNotReadyError } from "./utils/misc";
+import { BUNNY_CDN_PULL_ZONE, PullZone } from "./types";
 import { createK8Secret } from "./utils/k8Secret";
+import axios, { AxiosResponse } from "axios";
+import { bunnyAPIHeaders } from "./operator";
+import { backOff } from "exponential-backoff";
+import { logger } from "./logger";
 
 interface IHostname {
   Id: number;
@@ -156,4 +156,30 @@ export const handlePullZoneModification = async (
 
 export const deletePullZone = async (id: number): Promise<void> => {
   await axios.delete(`https://api.bunny.net/pullzone/${id}`, { headers: bunnyAPIHeaders });
+};
+
+// util
+export const getPullZoneCrStatusId = async (name: string, namespace: string, customObjectsAPIClient: CustomObjectsApi): Promise<number> => {
+  try {
+    const { body } = await customObjectsAPIClient.getNamespacedCustomObjectStatus(
+      BUNNY_CDN_PULL_ZONE.API_GROUP,
+      BUNNY_CDN_PULL_ZONE.API_VERSION,
+      namespace,
+      BUNNY_CDN_PULL_ZONE.PLURAL,
+      name
+    );
+
+    const { status } = body as PullZone;
+
+    if (!status?.ready || !status?.id) throw new PullZoneNotReadyError(`Pull zone ${name} in ${namespace} is not ready`);
+
+    return status.id;
+  } catch (e) {
+    if (isNestedHttpResponse(e)) {
+      if (e.response.statusCode == 404) {
+        throw `Pull Zone ${name} in ${namespace} not found.`;
+      }
+    }
+    throw e;
+  }
 };

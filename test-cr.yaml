@@ -18,3 +18,24 @@ spec:
     namespace: default
   zoneType: volume
   monthlyBandwidthLimit: 1000
+---
+apiVersion: bunny-cdn-operator.com/v1alpha1
+kind: EdgeRule
+metadata:
+  name: testing-edge-rule
+  namespace: default
+spec:
+  pullZoneRef:
+    name: testing-pz
+    namespace: default
+  actionType: 1
+  actionParameter1: yahoo.fr
+  triggers:
+    - type: 0
+      patternMatches: ["*"]
+      patternMatchingType: 0
+  triggerMatchingType: 0
+  description: testing operator rule
+  enabled: true
+  deletionPolicy: delete
+  
