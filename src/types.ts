@@ -114,7 +114,7 @@ export interface EdgeRuleSpec {
 }
 
 export interface EdgeRuleStatus {
-  id?: number;
+  id?: string;
   ready: boolean;
   message: string;
   observedGeneration?: number;
