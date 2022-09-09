@@ -78,6 +78,8 @@ spec:
                   format: int64
                 id:
                   type: string
+                pullZoneId:
+                  type: number
       subresources:
         # status enables the status subresource.
         status: {}
@@ -91,6 +93,9 @@ spec:
         - name: EdgeRuleID
           type: string
           jsonPath: .status.id
+        - name: PullZoneID
+          type: number
+          jsonPath: .status.pullZoneId
 
   # either Namespaced or Cluster
   scope: Namespaced

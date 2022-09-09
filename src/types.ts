@@ -96,8 +96,9 @@ interface Trigger {
   type: number;
   patternMatches?: string[];
   patternMatchingType: number;
-  parameter1: string;
+  parameter1?: string;
 }
+
 export interface EdgeRuleSpec {
   pullZoneRef: {
     name: string;
@@ -109,12 +110,13 @@ export interface EdgeRuleSpec {
   triggers: Trigger[];
   triggerMatchingType: number;
   description?: string;
-  enabled?: boolean;
+  enabled: boolean;
   deletionPolicy: "delete" | "retain";
 }
 
 export interface EdgeRuleStatus {
   id?: string;
+  pullZoneId?: number;
   ready: boolean;
   message: string;
   observedGeneration?: number;
