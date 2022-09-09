@@ -36,6 +36,6 @@ spec:
       patternMatchingType: 0
   triggerMatchingType: 0
   description: testing operator rule
-  enabled: false
+  enabled: true
   deletionPolicy: delete
   
