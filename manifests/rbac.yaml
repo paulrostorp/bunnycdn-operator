@@ -18,7 +18,7 @@ rules:
     verbs: ["get", "delete", "create"]
   - apiGroups: ["bunny-cdn-operator.com"]
     resources:
-      ["pullzones", "pullzones/status", "pullzones/finalizers", "storagezones", "storagezones/status", "storagezones/finalizers"]
+      ["pullzones", "pullzones/status", "pullzones/finalizers", "storagezones", "storagezones/status", "storagezones/finalizers", "edgerules", "edgerules/status", "edgerules/finalizers"]
     verbs: ["get", "watch", "update", "patch", "delete", "create"]
 ---
 apiVersion: rbac.authorization.k8s.io/v1
