@@ -19,8 +19,18 @@ spec:
           properties:
             spec:
               type: object
-              required: ["actionType", "triggers", "triggerMatchingType"]
+              required:
+                ["pullZoneRef", "actionType", "triggers", "triggerMatchingType"]
               properties:
+                pullZoneRef:
+                  type: object
+                  properties:
+                    name:
+                      type: string
+                    namespace:
+                      type: string
+                  required:
+                    - "name"
                 actionType:
                   type: integer
                 actionParameter1:
@@ -51,7 +61,7 @@ spec:
                 enabled:
                   type: boolean
                   default: true
-                
+
                 deletionPolicy:
                   type: string
                   pattern: "^(delete|retain)"

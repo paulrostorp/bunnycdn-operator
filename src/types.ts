@@ -60,10 +60,6 @@ export interface PullZoneSpec {
     name: string;
     namespace?: string;
   };
-  edgeRules?: {
-    name: string;
-    namespace?: string;
-  }[];
   zoneType: "premium" | "volume"; // defaults to volume
   zoneSecurityEnabled: boolean; // defaults to true
   errorPageWhiteLabel: boolean; // defaults to true
@@ -103,6 +99,10 @@ interface Trigger {
   parameter1: string;
 }
 export interface EdgeRuleSpec {
+  pullZoneRef: {
+    name: string;
+    namespace?: string;
+  };
   actionType: number;
   actionParameter1?: string;
   actionParameter2?: string;

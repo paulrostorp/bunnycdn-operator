@@ -24,17 +24,6 @@ spec:
                   type: string
                 storageZoneId:
                   type: integer
-                edgeRules:
-                  type: array
-                  items:
-                    type: object
-                    properties:
-                      name:
-                        type: string
-                      namespace:
-                        type: string
-                    required:
-                      - "name"
                 storageZoneRef:
                   type: object
                   properties:
