@@ -17,8 +17,19 @@ spec:
         openAPIV3Schema:
           type: object
           properties:
+            metadata:
+              type: object
+              properties:
+                name:
+                  type: string
+                  pattern: "^[a-z]([a-z0-9\\-]{0,61}[a-z0-9])?$"
             spec:
               type: object
+              x-kubernetes-validations:
+                - rule: "has(self.storageZoneRef) || has(self.originUrl)"
+                  message: "Either storageZoneRef or originUrl needs to be set."
+                - rule: "! has(self.storageZoneRef) || ! has(self.originUrl)"
+                  message: "storageZoneRef and originUrl cannot both be set."
               properties:
                 originUrl:
                   type: string
@@ -54,6 +65,62 @@ spec:
                   type: string
                   pattern: "^(delete|retain)"
                   default: "retain"
+                enableSmartCache:
+                  type: boolean
+                  default: false
+                cacheExpirationTime:
+                  type: integer
+                  minimum: -1
+                  default: -1
+                browserCacheExpirationTime:
+                  type: integer
+                  minimum: -1
+                  default: -1
+                enableQueryStringSort:
+                  type: boolean
+                  default: true
+                cacheErrorResponses:
+                  type: boolean
+                  default: false
+                enableQueryStringVary:
+                  type: boolean
+                  default: false
+                queryStringVaryParameters:
+                  type: array
+                  items:
+                    type: string
+                    pattern: "^[A-Za-z0-9]+$"
+                  default: []
+                enableWebpVary:
+                  type: boolean
+                  default: false
+                enableAvifVary:
+                  type: boolean
+                  default: false
+                enableMobileVary:
+                  type: boolean
+                  default: false
+                enableCountryCodeVary:
+                  type: boolean
+                  default: false
+                enableHostnameVary:
+                  type: boolean
+                  default: false
+                cookieVaryNames:
+                  type: array
+                  items:
+                    type: string
+                    pattern: "^[A-Za-z0-9]+$"
+                  default: []
+                stripResponseCookies:
+                  type: boolean
+                  default: true
+                useStaleWhileOffline:
+                  type: boolean
+                  default: false
+                useStaleWhileUpdating:
+                  type: boolean
+                  default: false
             status:
               type: object
               properties:
@@ -72,7 +139,7 @@ spec:
       additionalPrinterColumns:
         - name: Ready
           type: boolean
-          jsonPath: .status.ready          
+          jsonPath: .status.ready
         - name: Message
           type: string
           jsonPath: .status.message
@@ -91,4 +158,4 @@ spec:
     kind: PullZone
     # shortNames allow shorter string to match your resource on the CLI
     shortNames:
-    - "plz"
+      - "plz"

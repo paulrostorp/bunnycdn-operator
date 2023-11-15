@@ -20,6 +20,36 @@ spec:
   monthlyBandwidthLimit: 1000
 ---
 apiVersion: bunny-cdn-operator.com/v1alpha1
+kind: PullZone
+metadata:
+  name: testing-url-pz
+  namespace: default
+spec:
+  originUrl: https://acme.org.uk/
+  zoneType: premium
+  zoneSecurityEnabled: true
+  errorPageWhiteLabel: true
+  enabledCacheSlice: true
+  monthlyBandwidthLimit: 0
+  deletionPolicy: retain
+  enableSmartCache: false
+  cacheExpirationTime: -1
+  browserCacheExpirationTime: -1
+  enableQueryStringSort: true
+  cacheErrorResponses: false
+  enableQueryStringVary: false
+  queryStringVaryParameters: []
+  enableWebpVary: false
+  enableAvifVary: false
+  enableMobileVary: false
+  enableCountryCodeVary: false
+  enableHostnameVary: false
+  cookieVaryNames: []
+  stripResponseCookies: true
+  useStaleWhileOffline: false
+  useStaleWhileUpdating: false
+---
+apiVersion: bunny-cdn-operator.com/v1alpha1
 kind: EdgeRule
 metadata:
   name: testing-edge-rule
@@ -38,4 +68,3 @@ spec:
   description: testing operator rule
   enabled: true
   deletionPolicy: delete
-  
