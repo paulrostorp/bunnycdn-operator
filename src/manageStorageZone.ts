@@ -37,7 +37,7 @@ const getStorageZones = async (): Promise<Array<ApiStorageZone>> => {
   const res = await axios.get<{ Items: Array<ApiStorageZone> }>("https://api.bunny.net/storagezone?page=1&perPage=1000", {
     headers: bunnyAPIHeaders,
   });
-  if (!res.data?.Items) throw new Error("Failed to fetch storage zones");
+  if (!res.data?.Items) throw new Error("Failed to fetch Storage Zones");
   if (res.data.Items.length >= 1000) throw new Error("Too many pages, not implemented !");
 
   return res.data.Items;
@@ -47,7 +47,7 @@ export const getOrCreateStorageZone = async (name: string, region?: string, repl
   const zones = await getStorageZones();
   const existingZone = zones.find(zone => zone.Name == name);
   if (existingZone) {
-    logger.debug(`Storage zone ${name} already exists (${existingZone.Id}), skipping...`);
+    logger.debug(`Storage Zone ${name} already exists (${existingZone.Id}), skipping...`);
     return existingZone;
   } else {
     try {

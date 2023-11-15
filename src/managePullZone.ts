@@ -71,10 +71,11 @@ const getOriginConfig = async (
     const id = await backOff(() => getStorageZoneCrStatusId(name, namespace, customObjectsAPIClient), {
       retry: (e, attempt) => {
         if (e instanceof StorageZoneNotReadyError) {
-          logger.debug("Storage zone not ready, retrying...", { attempt });
+          logger.debug("Storage Zone not ready, retrying...", { attempt });
           return true;
         } else {
-          logger.error("Storage zone was not ready after 5 attempt, giving up...", { attempt });
+          logger.error("Storage Zone was not ready after 5 attempt, giving up...", { attempt });
+          logger.debug(e); // extended error
           return false;
         }
       },
@@ -149,7 +150,7 @@ export const handlePullZoneModification = async (
     );
     return { ready: true, message: "", id: Id };
   } catch (e) {
-    logger.error("Failed to upsert pull zone:", e);
+    logger.error("Failed to upsert Pull Zone:", e);
     return { ready: false, message: e instanceof Error ? e.message : "Unknown" };
   }
 };

@@ -3,10 +3,12 @@ import { BunnyOperator } from "./operator";
 
 const operator = new BunnyOperator(logger);
 
+logger.debug("Starting Bunny CDN Operator...");
+
 operator
   .start()
   .then(() => {
-    logger.debug("Operator started");
+    logger.debug("Bunny CDN Operator started.");
   })
   .catch(e => logger.error("Failed to start operator", e));
 
