@@ -60,12 +60,28 @@ export interface PullZoneSpec {
     name: string;
     namespace?: string;
   };
-  zoneType: "premium" | "volume"; // defaults to volume
+  zoneType: "premium" | "volume"; // defaults to 'volume'
   zoneSecurityEnabled: boolean; // defaults to true
   errorPageWhiteLabel: boolean; // defaults to true
   enabledCacheSlice: boolean; // defaults to true
   monthlyBandwidthLimit: number; // defaults to 0 a.k.a unlimited
-  deletionPolicy: "delete" | "retain";
+  deletionPolicy: "delete" | "retain"; // defaults to 'retain'
+  enableSmartCache: boolean; // defaults to false
+  cacheExpirationTime: number; // defaults to -1 (Respect Origin Cache-Control)
+  browserCacheExpirationTime: number; // defaults to -1 (Match Server Cache Expiration)
+  enableQueryStringSort: boolean; // defaults to true
+  cacheErrorResponses: boolean; // defaults to false
+  enableQueryStringVary: boolean; // defaults to false
+  queryStringVaryParameters: string[]; // defaults to []
+  enableWebpVary: boolean; // defaults to false
+  enableAvifVary: boolean; // defaults to false
+  enableMobileVary: boolean; // defaults to false
+  enableCountryCodeVary: boolean; // defaults to false
+  enableHostnameVary: boolean; // defaults to false
+  cookieVaryNames: string[]; // defaults to []
+  stripResponseCookies: boolean; // defaults to true
+  useStaleWhileOffline: boolean; // defaults to false
+  useStaleWhileUpdating: boolean; // defaults to false
 }
 
 export interface PullZoneStatus {
