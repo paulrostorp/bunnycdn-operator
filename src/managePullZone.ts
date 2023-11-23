@@ -22,12 +22,29 @@ interface IPullZone {
   OriginUrl: string;
   StorageZoneId: number;
   Hostnames: Array<IHostname>;
-  MonthlyBandwidthLimit: number;
+  MonthlyBandwidthLimit: number; // Sets the monthly limit of bandwidth in bytes that the pullzone is allowed to use
   Type: 0 | 1; // The type of the pull zone. Premium = 0, Volume = 1
-  ErrorPageWhitelabel: boolean;
-  ZoneSecurityEnabled: boolean;
+  ErrorPageWhitelabel: boolean; // Determines if the error pages should be whitelabel or not
+  ZoneSecurityEnabled: boolean; // Determines if the zone token authentication security should be enabled
   ZoneSecurityKey: string;
   EnableCacheSlice: boolean; // Determines if cache slicing (Optimize for video) should be enabled for this zone
+  EnableSmartCache: boolean; // Dynamically selects if a request should be cached based on the file extension and MIME type to allow easy full-site acceleration. If the request is cacheable, the Cache Expiration Time setting will be applied.
+  CacheControlMaxAgeOverride: number; // Sets the cache control override setting for this zone
+  CacheControlBrowserMaxAgeOverride: number; // Sets the browser cache control override setting for this zone
+  EnableQueryStringOrdering: boolean; // Determines if the query string ordering should be enabled.
+  CacheErrorResponses: boolean; // Determines if the cache error responses should be enabled on the zone
+  IgnoreQueryStrings: boolean; // Determines if the Pull Zone should ignore query strings when serving cached objects (Vary by Query String)
+  QueryStringVaryParameters: string[]; // Contains the list of vary parameters that will be used for vary cache by query string. If empty, all parameters will be used to construct the key
+  EnableWebpVary: boolean; // Determines if the WebP Vary feature should be enabled.
+  EnableAvifVary: boolean; // Determines if the AVIF Vary feature should be enabled.
+  EnableMobileVary: boolean; // Determines if the Mobile Vary feature is enabled.
+  EnableCountryCodeVary: boolean; // Determines if the Country Code Vary feature should be enabled.
+  EnableHostnameVary: boolean; // Determines if the Hostname Vary feature should be enabled.
+  EnableCookieVary: boolean; // Determines if the Cookie Vary feature is enabled.
+  CookieVaryParameters: string[]; // Contains the list of vary parameters that will be used for vary cache by cookie string. If empty, cookie vary will not be used.
+  DisableCookies: boolean; // Determines if the Pull Zone should automatically remove cookies from the responses
+  UseStaleWhileOffline: boolean; // Determines if we should use stale cache while the origin is offline
+  UseStaleWhileUpdating: boolean; // Determines if we should use stale cache while cache is updating
 }
 
 const getPullZones = async (): Promise<Array<IPullZone>> => {
@@ -71,10 +88,11 @@ const getOriginConfig = async (
     const id = await backOff(() => getStorageZoneCrStatusId(name, namespace, customObjectsAPIClient), {
       retry: (e, attempt) => {
         if (e instanceof StorageZoneNotReadyError) {
-          logger.debug("Storage zone not ready, retrying...", { attempt });
+          logger.debug("Storage Zone not ready, retrying...", { attempt });
           return true;
         } else {
-          logger.error("Storage zone was not ready after 5 attempt, giving up...", { attempt });
+          logger.error("Storage Zone was not ready after 5 attempt, giving up...", { attempt });
+          logger.debug(e); // extended error
           return false;
         }
       },
@@ -120,6 +138,23 @@ const getOrCreatePullZoneConfig = async (
     ErrorPageWhitelabel: spec.errorPageWhiteLabel,
     MonthlyBandwidthLimit: spec.monthlyBandwidthLimit,
     ZoneSecurityEnabled: spec.zoneSecurityEnabled,
+    EnableSmartCache: spec.enableSmartCache,
+    CacheControlMaxAgeOverride: spec.cacheExpirationTime,
+    CacheControlBrowserMaxAgeOverride: spec.browserCacheExpirationTime,
+    EnableQueryStringOrdering: spec.enableQueryStringSort,
+    CacheErrorResponses: spec.cacheErrorResponses,
+    IgnoreQueryStrings: !spec.enableQueryStringVary,
+    QueryStringVaryParameters: spec.queryStringVaryParameters,
+    EnableWebpVary: spec.enableWebpVary,
+    EnableAvifVary: spec.enableAvifVary,
+    EnableMobileVary: spec.enableMobileVary,
+    EnableCountryCodeVary: spec.enableCountryCodeVary,
+    EnableHostnameVary: spec.enableHostnameVary,
+    EnableCookieVary: spec.cookieVaryNames.length > 0,
+    CookieVaryParameters: spec.cookieVaryNames,
+    DisableCookies: spec.stripResponseCookies,
+    UseStaleWhileOffline: spec.useStaleWhileOffline,
+    UseStaleWhileUpdating: spec.useStaleWhileUpdating,
   };
   return { createConfig, updateConfig };
 };
@@ -149,7 +184,7 @@ export const handlePullZoneModification = async (
     );
     return { ready: true, message: "", id: Id };
   } catch (e) {
-    logger.error("Failed to upsert pull zone:", e);
+    logger.error("Failed to upsert Pull Zone:", e);
     return { ready: false, message: e instanceof Error ? e.message : "Unknown" };
   }
 };
