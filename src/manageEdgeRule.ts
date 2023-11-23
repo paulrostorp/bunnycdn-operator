@@ -48,10 +48,11 @@ const getPullZoneId = async (object: EdgeRule, customObjectsAPIClient: CustomObj
   const id = await backOff(() => getPullZoneCrStatusId(name, namespace, customObjectsAPIClient), {
     retry: (e, attempt) => {
       if (e instanceof PullZoneNotReadyError) {
-        logger.debug("Pull zone not ready, retrying...", { attempt });
+        logger.debug("Pull Zone not ready, retrying...", { attempt });
         return true;
       } else {
-        logger.error("Pull zone was not ready after 5 attempt, giving up...", { attempt });
+        logger.error("Pull Zone was not ready after 5 attempt, giving up...", { attempt });
+        logger.debug(e); // extended error
         return false;
       }
     },

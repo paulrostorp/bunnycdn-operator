@@ -34,7 +34,8 @@ export class BunnyOperator extends Operator {
           }
         }
       } catch (err) {
-        logger.error(`Failed to process event for resource ${metadata?.name}: ` + (err instanceof Error ? err.message : "error unknown"));
+        logger.error(`Failed to process event for Edge Rule ${metadata?.name}: ` + (err instanceof Error ? err.message : "error unknown"));
+        logger.debug(err); // stack trace
       }
     });
 
@@ -54,7 +55,8 @@ export class BunnyOperator extends Operator {
             }
           }
         } catch (err) {
-          logger.error(`Failed to process event for resource ${metadata?.name}: ` + (err instanceof Error ? err.message : "error unknown"));
+          logger.error(`Failed to process event for Storage Zone ${metadata?.name}: ` + (err instanceof Error ? err.message : "error unknown"));
+          logger.debug(err); // stack trace
         }
       }
     );
@@ -71,7 +73,8 @@ export class BunnyOperator extends Operator {
           }
         }
       } catch (err) {
-        logger.error(`Failed to process event for resource ${metadata?.name}: ` + (err instanceof Error ? err.message : "error unknown"));
+        logger.error(`Failed to process event for Pull Zone ${metadata?.name}: ` + (err instanceof Error ? err.message : "error unknown"));
+        logger.debug(err); // stack trace
       }
     });
   }
@@ -79,23 +82,25 @@ export class BunnyOperator extends Operator {
   private async onEdgeRuleModified(e: ResourceEvent): Promise<void> {
     const object = e.object as EdgeRule;
     const metadata = object.metadata;
+    logger.debug(`Processing change to Edge Rule ${object.metadata.name}...`);
 
     if (!object.status || object.status.observedGeneration !== metadata.generation) {
       // handle resource modification here
       const { ready, message, id, pullZoneId } = await handleEdgeRuleModification(object, this.customObjectsAPIClient);
       await this.setResourceStatus(e.meta, { observedGeneration: metadata.generation, ready, message, id, pullZoneId });
-      logger.debug(`Edge rule ${object.metadata.name} created/updated`);
+      logger.debug(`Edge Rule ${object.metadata.name} created/updated.`);
     }
   }
 
   private async onEdgeRuleDeleted(e: ResourceEvent): Promise<void> {
     const object = e.object as EdgeRule;
+    logger.debug(`Processing delete of Edge Rule ${object.metadata.name}...`);
 
     if (object?.status?.ready) {
       // do delete
       if (!object.status.id || !object.status.pullZoneId) {
         // this shouldn't happen
-        throw new Error("Failed to find edge rule ID from resource state");
+        throw new Error("Failed to find Edge Rule ID from resource state");
       }
       if (object.spec.deletionPolicy === "delete") {
         await deleteEdgeRule(object.status.id, object.status.pullZoneId);
@@ -103,61 +108,67 @@ export class BunnyOperator extends Operator {
     } else {
       // ignore
     }
-
-    logger.debug(`Edge rule ${object.metadata.name} deleted`);
+    logger.debug(`Edge Rule ${object.metadata.name} deleted.`);
   }
 
   private async onStorageZoneModified(e: ResourceEvent): Promise<void> {
     const object = e.object as StorageZone;
     const metadata = object.metadata;
+    logger.debug(`Processing change to Storage Zone ${object.metadata.name}...`);
 
     if (!object.status || object.status.observedGeneration !== metadata.generation) {
       // handle resource modification here
       const { ready, message, id } = await handleStorageZoneModification(object, this.k8sApi);
 
       await this.setResourceStatus(e.meta, { observedGeneration: metadata.generation, ready, message, id });
+      logger.debug(`Storage Zone ${object.metadata.name} created/updated.`);
     }
   }
 
   private async onStorageZoneDeleted(e: ResourceEvent): Promise<void> {
     const object = e.object as StorageZone;
+    logger.debug(`Processing delete of Storage Zone ${object.metadata.name}...`);
 
     if (object?.status?.ready) {
       // do delete
       if (!object.status.id) {
         // this shouldn't happen
-        throw new Error("Failed to find storage zone ID from resource state");
+        throw new Error("Failed to find Storage Zone ID from resource state");
       }
       if (object.spec.deletionPolicy === "delete") await deleteStorageZone(object.status.id);
     } else {
       // ignore
     }
-    logger.debug("Storage zone deleted");
+    logger.debug("Storage Zone deleted.");
   }
 
   private async onPullZoneModified(e: ResourceEvent): Promise<void> {
     const object = e.object as PullZone;
     const metadata = object.metadata;
+    logger.debug(`Processing change to Pull Zone ${object.metadata.name}...`);
 
     if (!object.status || object.status.observedGeneration !== metadata.generation) {
       // handle resource modification here
       const { ready, message, id } = await handlePullZoneModification(object, this.customObjectsAPIClient, this.k8sApi);
       await this.setResourceStatus(e.meta, { observedGeneration: metadata.generation, ready, message, id });
+      logger.debug(`Pull Zone ${object.metadata.name} created/updated.`);
     }
   }
 
   private async onPullZoneDeleted(e: ResourceEvent): Promise<void> {
     const object = e.object as PullZone;
+    logger.debug(`Processing delete of Pull Zone ${object.metadata.name}...`);
+
     if (object?.status?.ready) {
       // do delete
       if (!object.status.id) {
         // this shouldn't happen
-        throw new Error("Failed to find pull zone ID from resource state");
+        throw new Error("Failed to find Pull Zone ID from resource state");
       }
       if (object.spec.deletionPolicy === "delete") await deletePullZone(object.status.id);
     } else {
       // ignore
     }
-    logger.debug("pull zone deleted");
+    logger.debug("Pull Zone deleted.");
   }
 }
